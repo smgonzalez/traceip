@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
+    <script type="text/javascript" src="app.js"></script>
+    <link data-require="bootstrap-css@3.3.1" data-semver="3.3.1" rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css" />
+    <link rel="stylesheet" type="text/css" href="app.css">
+    <title>IP Tracer</title>
+</head>
+<body>
+    <div ng-app="ipApp" ng-controller="ipController">
+
+        <form class="form-horizontal col-sm-6" role="form">
+            <h1 class="col-sm-offset-3">IP Information</h1>
+            <div class="form-group">
+                <label for="ip" class="col-sm-3 control-label">Ip Address</label>
+                <div class="col-sm-6">
+                    <input type="text" id="ip" class="form-control" ng-model="ip.value" pattern="^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$"/>
+                </div>
+                <div class="col-sm-3"></div>
+            </div>
+
+            <div class="col-sm-3"></div>
+            <input type="submit" ng-click="send()" value="Send" class="btn btn-primary btn-submit" />
+        </form>
+        <div class="col-sm-6 ip-data">
+            <div>IP data  = {{ip.data | json}}</div>
+        </div>
+    </div>
+</body>
+</html>
