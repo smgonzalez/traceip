@@ -10,13 +10,13 @@ import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.reactivex.core.AbstractVerticle;
 import io.vertx.reactivex.core.eventbus.Message;
 import io.vertx.reactivex.ext.web.client.WebClient;
-import traceip.statistics.UpdateStatisticsVerticle;
-import traceip.tracer.currency.CurrencyVerticle;
 import traceip.http.exceptions.HttpException;
 import traceip.http.exceptions.NotFoundException;
+import traceip.statistics.UpdateStatisticsVerticle;
 import traceip.tracer.country.CountryInfo;
 import traceip.tracer.country.CountryInfoVerticle;
 import traceip.tracer.country.Currency;
+import traceip.tracer.currency.CurrencyVerticle;
 import traceip.tracer.distances.DistanceCalculator;
 import traceip.tracer.distances.GeoLocation;
 

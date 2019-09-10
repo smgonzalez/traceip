@@ -1,6 +1,5 @@
 package traceip;
 
-import io.reactivex.disposables.Disposable;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;

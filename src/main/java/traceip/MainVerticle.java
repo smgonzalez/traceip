@@ -10,9 +10,9 @@ import io.vertx.reactivex.ext.web.Router;
 import io.vertx.reactivex.ext.web.handler.StaticHandler;
 import traceip.statistics.GetStatisticsVerticle;
 import traceip.statistics.UpdateStatisticsVerticle;
-import traceip.tracer.currency.CurrencyVerticle;
 import traceip.tracer.IpInformationVerticle;
 import traceip.tracer.country.CountryInfoVerticle;
+import traceip.tracer.currency.CurrencyVerticle;
 
 import java.util.Arrays;
 import java.util.List;

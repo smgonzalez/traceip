@@ -1,6 +1,5 @@
 package traceip.tracer.country;
 
-import io.vertx.core.Promise;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
