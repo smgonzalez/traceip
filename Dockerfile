@@ -2,7 +2,8 @@
 # Build project jar with gradle
 ARG VERSION=8u181
 FROM openjdk:${VERSION}-jdk-slim as builder
-WORKDIR /usr/app
+
+WORKDIR /usr/traceip
 
 # Get gradle distribution
 COPY *.gradle gradle.* gradlew ./
@@ -20,7 +21,8 @@ RUN ./gradlew build --no-daemon
 FROM vertx/vertx3
 
 ENV VERTICLE_NAME traceip.MainVerticle
-ENV VERTICLE_FILE /usr/app/build/libs/traceip-3.8.1-fat.jar
+ENV VERTICLE_FILE /usr/traceip/build/libs/traceip-3.8.1-fat.jar
+ENV VM_OPTIONS -Dvertx.logger-delegate-factory-class-name=io.vertx.core.logging.SLF4JLogDelegateFactory
 
 # Set the location of the verticles
 ENV VERTICLE_HOME /usr/verticles
@@ -33,4 +35,4 @@ COPY --from=builder $VERTICLE_FILE $VERTICLE_HOME/
 # Launch the verticle
 WORKDIR $VERTICLE_HOME
 ENTRYPOINT ["sh", "-c"]
-CMD ["exec vertx run $VERTICLE_NAME -cp $VERTICLE_HOME/*"]
+CMD ["exec vertx run $VM_OPTIONS $VERTICLE_NAME -cp $VERTICLE_HOME/*"]
