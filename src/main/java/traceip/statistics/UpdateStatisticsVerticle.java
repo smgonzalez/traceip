@@ -7,6 +7,9 @@ import io.vertx.core.logging.LoggerFactory;
 import io.vertx.reactivex.core.AbstractVerticle;
 import io.vertx.reactivex.core.eventbus.Message;
 
+/**
+ * Recibe las actualizaciones del uso del API, y notifica al/los Verticle/s encargados de retornarlas.
+ */
 public class UpdateStatisticsVerticle extends AbstractVerticle {
 
     public static final String PUBLISH_STATISTICS_ADDRESS = "publish-statistics";

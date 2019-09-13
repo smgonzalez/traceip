@@ -11,6 +11,7 @@ public class CountryInfo {
 
     private final String isoCode;
     private final String name;
+    private final String nativeName;
     private final List<Language> languages;
     private final List<String> timezones;
     private final List<Double> latlng;
@@ -20,6 +21,7 @@ public class CountryInfo {
     public CountryInfo(
             @JsonProperty("alpha2Code") String isoCode,
             @JsonProperty("name") String name,
+            @JsonProperty("nativeName") String nativeName,
             @JsonProperty("languages") List<Language> languages,
             @JsonProperty("timezones") List<String> timezones,
             @JsonProperty("latlng") List<Double> latlng,
@@ -27,6 +29,7 @@ public class CountryInfo {
     ) {
         this.isoCode = isoCode;
         this.name = name;
+        this.nativeName = nativeName;
         this.languages = languages;
         this.timezones = timezones;
         this.latlng = latlng;
@@ -55,5 +58,9 @@ public class CountryInfo {
 
     public List<Currency> getCurrencies() {
         return currencies;
+    }
+
+    public String getNativeName() {
+        return nativeName;
     }
 }

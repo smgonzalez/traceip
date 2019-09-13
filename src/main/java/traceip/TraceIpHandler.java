@@ -44,7 +44,7 @@ public class TraceIpHandler implements Handler<RoutingContext> {
     private void handleError(Throwable throwable, HttpServerResponse response) {
         if (throwable instanceof ReplyException) {
             ReplyException replyException = (ReplyException) throwable;
-            response.setStatusCode(replyException.failureCode());
+            response.setStatusCode(replyException.failureCode() > 0 ? replyException.failureCode() : 0);
             response.end(replyException.getMessage());
         } else {
             logger.error(throwable);

@@ -1,9 +1,12 @@
 package traceip;
 
 import io.reactivex.Single;
+import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Promise;
+import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import io.vertx.reactivex.config.ConfigRetriever;
 import io.vertx.reactivex.core.AbstractVerticle;
 import io.vertx.reactivex.core.http.HttpServer;
 import io.vertx.reactivex.ext.web.Router;
@@ -19,7 +22,6 @@ import java.util.List;
 
 public class MainVerticle extends AbstractVerticle {
 
-    private static final Integer PORT = 8080;
     private HttpServer server;
 
     private final Logger logger = LoggerFactory.getLogger(MainVerticle.class);
@@ -31,19 +33,20 @@ public class MainVerticle extends AbstractVerticle {
         router.get("/ip-statistics").handler(new StatisticsHandler());
         router.get("/*").handler(StaticHandler.create());
 
+        DeploymentOptions deploymentOptions = new DeploymentOptions().setConfig(config());
         List<Single<String>> verticlesToDeploy = Arrays.asList(
-                vertx.rxDeployVerticle(new IpInformationVerticle()),
-                vertx.rxDeployVerticle(new CountryInfoVerticle()),
-                vertx.rxDeployVerticle(new CurrencyVerticle()),
-                vertx.rxDeployVerticle(new GetStatisticsVerticle()),
-                vertx.rxDeployVerticle(new UpdateStatisticsVerticle())
+                vertx.rxDeployVerticle(new IpInformationVerticle(), deploymentOptions),
+                vertx.rxDeployVerticle(new CountryInfoVerticle(), deploymentOptions),
+                vertx.rxDeployVerticle(new CurrencyVerticle(), deploymentOptions),
+                vertx.rxDeployVerticle(new GetStatisticsVerticle(), deploymentOptions),
+                vertx.rxDeployVerticle(new UpdateStatisticsVerticle(), deploymentOptions)
         );
 
         Single.zip(verticlesToDeploy, deploymentIds -> deploymentIds)
                 .subscribe(objects -> {
                     this.server = vertx.createHttpServer()
                             .requestHandler(router)
-                            .listen(PORT);
+                            .listen(config().getInteger("http.port"));
                     promise.complete();
                 }, throwable -> {
                     String error = "Unable to deploy verticles";

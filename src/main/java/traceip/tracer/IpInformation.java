@@ -11,6 +11,7 @@ public class IpInformation {
 
     private final String isoCode;
     private final String name;
+    private final String nativeName;
     private final List<Language> languages;
     private final String localTime;
     private final List<String> timezones;
@@ -22,6 +23,7 @@ public class IpInformation {
     public IpInformation(
             @JsonProperty("isoCode") String isoCode,
             @JsonProperty("name") String name,
+            @JsonProperty("nativeName") String nativeName,
             @JsonProperty("languages") List<Language> languages,
             @JsonProperty("localTime") String localTime,
             @JsonProperty("timezones") List<String> timezones,
@@ -32,6 +34,7 @@ public class IpInformation {
     ) {
         this.isoCode = isoCode;
         this.name = name;
+        this.nativeName = nativeName;
         this.languages = languages;
         this.localTime = localTime;
         this.timezones = timezones;
@@ -75,5 +78,9 @@ public class IpInformation {
 
     public Long getDistanceToRefPoint() {
         return distanceToRefPoint;
+    }
+
+    public String getNativeName() {
+        return nativeName;
     }
 }

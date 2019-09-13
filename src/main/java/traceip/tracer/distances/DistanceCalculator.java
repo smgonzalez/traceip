@@ -1,5 +1,8 @@
 package traceip.tracer.distances;
 
+/**
+ * Method Object para encapsular el calculo de la distancia entre 2 geolocalizaciones
+ */
 public class DistanceCalculator {
 
     private final GeoLocation loc1;

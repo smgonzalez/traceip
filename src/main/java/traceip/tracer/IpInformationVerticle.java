@@ -2,14 +2,19 @@ package traceip.tracer;
 
 import io.reactivex.Single;
 import io.reactivex.SingleSource;
+import io.vertx.core.Promise;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.client.WebClientOptions;
+import io.vertx.reactivex.config.ConfigRetriever;
 import io.vertx.reactivex.core.AbstractVerticle;
+import io.vertx.reactivex.core.buffer.Buffer;
 import io.vertx.reactivex.core.eventbus.Message;
+import io.vertx.reactivex.ext.web.client.HttpResponse;
 import io.vertx.reactivex.ext.web.client.WebClient;
+import traceip.http.exceptions.BadRequestException;
 import traceip.http.exceptions.HttpException;
 import traceip.http.exceptions.NotFoundException;
 import traceip.statistics.UpdateStatisticsVerticle;
@@ -25,38 +30,58 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+/**
+ * Verticle encargado de recopilar la siguiente información relacionada con una IP:
+ *
+ * <ul>
+ *     <li>Pais de localizacion</li>
+ *     <li>Información general del pais de localización</li>
+ *     <li>Distancias hacia un punto de referencias fijo (Bs As)</li>
+ *     <li>Información de la moneda del pais, y su cotización en dolares</li>
+ * </ul>
+ *
+ * Para conseguir la información del pais, y la información de monedas, se comunica via EventBus hacia distintos verticles
+ * Para conseguir la distancias a Bs As, realiza un calculo de manera no bloqueante
+ *
+ */
 public class IpInformationVerticle extends AbstractVerticle {
 
     public static final String IP_INFORMATION_ADDRESS = "ip-information";
 
-    private static final String IP_LOCATION_HOST = "api.ip2country.info";
-    private static final String IP_LOCATION_URI = "/ip?";
-
-    private final GeoLocation refPointGeoLocation = new GeoLocation( -34.61315, -58.37723);
+    private String ipLocationUri;
+    private GeoLocation refPointGeoLocation;
 
     private WebClient webClient;
 
     private final Logger logger = LoggerFactory.getLogger(IpInformationVerticle.class);
 
     @Override
-    public void start() {
+    public void start(Promise<Void> promise) {
+        ConfigRetriever retriever = ConfigRetriever.create(vertx);
+        retriever.getConfig(event -> initialize(event.result(), promise));
+    }
+
+    private void initialize(JsonObject config, Promise<Void> promise) {
         webClient = WebClient.create(vertx, new WebClientOptions()
-            .setTrustAll(true));
+                .setDefaultHost(config.getString("api.ip-location.host"))
+                .setTrustAll(true));
+
+        ipLocationUri = config.getString("api.ip-location.uri");
+        refPointGeoLocation = new GeoLocation(
+                config.getDouble("refPoint.geolocation.latitude"),
+                config.getDouble("refPoint.geolocation.longitude")
+        );
+
         vertx.eventBus().<String>consumer(IP_INFORMATION_ADDRESS).handler(this::ipInformationHandler);
+        promise.complete();
     }
 
     private void ipInformationHandler(Message<String> message) {
         webClient
-                .get(IP_LOCATION_HOST, IP_LOCATION_URI + message.body())
+                .get(String.format(ipLocationUri, message.body()))
                 .rxSend()
-                .flatMap(response -> {
-                    String countryCode = response.bodyAsJsonObject().getString("countryCode");
-                    if (countryCode == null || countryCode.isEmpty()) {
-                        throw new NotFoundException(404, "The IP provided, does not exist");
-                    }
-                    return vertx.eventBus().<JsonObject>rxRequest(CountryInfoVerticle.COUNTRY_INFO_ADDRESS, countryCode);
-                })
-                .flatMap(countryInfoJson -> enrichCountryInfoAndReply(countryInfoJson, message))
+                .flatMap(this::requestCountryInfo)
+                .flatMap(this::enrichCountryInfo)
                 .subscribe(
                         ipInformation -> updateStatisticsAndReply(ipInformation, message),
                         throwable -> ipInformationErrorHandler(throwable, message)
@@ -69,8 +94,16 @@ public class IpInformationVerticle extends AbstractVerticle {
         message.reply(ipInformation);
     }
 
-    private Single<JsonObject> enrichCountryInfoAndReply(Message<JsonObject> reply, Message<String> message) {
-        CountryInfo countryInfo = Json.mapper.convertValue (reply.body(), CountryInfo.class);
+    /**
+     * Enriquese la información del pais, con la información de la distancia a Bs As, y la cotizacion de
+     * la moneda local.
+     * Luego, response el mensaje original, con esta información
+     *
+     * @param countryInfoResponse Informacion general del pais
+     * @return Single que al resolverse, retornara un JsonObject, con la informacion del pais enriquecida
+     */
+    private Single<JsonObject> enrichCountryInfo(Message<JsonObject> countryInfoResponse) {
+        CountryInfo countryInfo = Json.mapper.convertValue (countryInfoResponse.body(), CountryInfo.class);
         GeoLocation geoLocation = getGeoLocation(countryInfo);
         Currency currency = countryInfo.getCurrencies().iterator().next();
 
@@ -81,6 +114,7 @@ public class IpInformationVerticle extends AbstractVerticle {
                 IpInformation ipInformation = new IpInformation(
                         countryInfo.getIsoCode(),
                         countryInfo.getName(),
+                        countryInfo.getNativeName(),
                         countryInfo.getLanguages(),
                         getLocalTime(countryInfo),
                         countryInfo.getTimezones(),
@@ -93,11 +127,24 @@ public class IpInformationVerticle extends AbstractVerticle {
         });
     }
 
+    /**
+     * Obtiene la cotización del dolar
+     *
+     * @see traceip.tracer.currency.CurrencyVerticle
+     * @param currency Moneda a consultar
+     * @return SingleSource que al resolverse, retornara la cotizacion
+     */
     private SingleSource<Double> getDollarConvertion(Currency currency) {
         return vertx.eventBus().<Double>rxRequest(CurrencyVerticle.DOLLAR_CONVERTION_ADDRESS, currency.getCode())
                 .map(Message::body);
     }
 
+    /**
+     * Obtiene la distsancia a Bs As, realizando un calculo no bloqueante
+     *
+     * @param geoLocation Geolocalización
+     * @return SingleSource que al resolverse, retornara la distancia
+     */
     private SingleSource<Long> getDistanceToRefPoint(GeoLocation geoLocation) {
         DistanceCalculator distanceCalculator = new DistanceCalculator(geoLocation, refPointGeoLocation);
 
@@ -113,6 +160,9 @@ public class IpInformationVerticle extends AbstractVerticle {
         return new GeoLocation(latlng.get(0), latlng.get(1));
     }
 
+    /**
+     * Obtiene la hora actual del pais, en algun timezone definido para el mismo
+     */
     private String getLocalTime(CountryInfo countryInfo) {
         if (countryInfo.getTimezones().isEmpty())
             return "";
@@ -138,4 +188,22 @@ public class IpInformationVerticle extends AbstractVerticle {
 
     }
 
+    /**
+     * Valida la respuesta del servicio que retorna la localización de la IP,
+     * y solicita la informacion general del pais
+     *
+     * @see traceip.tracer.country.CountryInfoVerticle
+     * @param response Single que al resolverse, retornara un JsonObject con la informacion general del pais
+     * @return
+     */
+    private Single<Message<JsonObject>> requestCountryInfo(HttpResponse<Buffer> response) {
+        if (response.statusCode() == 400) {
+            throw new BadRequestException("The IP provided is invalid");
+        }
+        String countryCode = response.bodyAsJsonObject().getString("countryCode");
+        if (countryCode == null || countryCode.isEmpty()) {
+            throw new NotFoundException("The IP provided, does not exist");
+        }
+        return vertx.eventBus().rxRequest(CountryInfoVerticle.COUNTRY_INFO_ADDRESS, countryCode);
+    }
 }

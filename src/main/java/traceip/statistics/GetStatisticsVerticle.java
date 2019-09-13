@@ -1,9 +1,14 @@
+
 package traceip.statistics;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.core.AbstractVerticle;
 import io.vertx.reactivex.core.eventbus.Message;
 
+/**
+ * Verticle encargado de retornar las estadisticas de uso del API. Las mismas estadisticas son actualizadas
+ * por el verticle UpdateStatisticsVerticle
+ */
 public class GetStatisticsVerticle extends AbstractVerticle {
 
     public static final String GET_STATISTICS_ADDRESS = "get-statistics";

@@ -2,8 +2,8 @@ package traceip.http.exceptions;
 
 public class NotFoundException extends HttpException {
 
-    public NotFoundException(int httpCode, String message) {
-        super(httpCode, message);
+    public NotFoundException(String message) {
+        super(404, message);
     }
 
 }

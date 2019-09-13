@@ -1,0 +1,22 @@
+{
+  "http.port" : 8080,
+
+  "api.ip-location.host": "api.ip2country.info",
+  "api.ip-location.uri": "/ip?%s",
+
+  "api.country-info.host": "restcountries.eu",
+  "api.country-info.uri": "/rest/v2/alpha/%s",
+
+  "api.currency-info.host": "data.fixer.io",
+  "api.currency-info.uri": "/api/latest",
+  "api.currency-info.key": "bad78aebe52cdd744e24e78b88785ac8",
+  "api.currency-info.euroCode": "EUR",
+  "api.currency-info.dollarCode": "USD",
+  "api.currency-info.exchangesExpirationTime": 60,
+  "api.currency-info.apiRetryDelay": 5,
+
+  "refPoint.geolocation.latitude": -34.61315,
+  "refPoint.geolocation.longitude": -58.37723
+
+
+}

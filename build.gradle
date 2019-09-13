@@ -20,6 +20,7 @@ dependencies {
   compile "io.vertx:vertx-web:$version"
   compile "io.vertx:vertx-web-client:$version"
   compile "io.vertx:vertx-rx-java2:$version"
+  compile "io.vertx:vertx-config:$version"
 
   compile "com.fasterxml.jackson.core:jackson-databind:2.9.5"
   compile "ch.qos.logback:logback-classic:1.1.7"
