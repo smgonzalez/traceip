@@ -28,11 +28,19 @@ public class MainVerticle extends AbstractVerticle {
 
     @Override
     public void start(Promise<Void> promise) {
+        Router router = createRoutes();
+        deployVerticles(promise, router);
+    }
+
+    private Router createRoutes() {
         Router router = Router.router(vertx);
         router.get("/ip-tracer").handler(new TraceIpHandler());
         router.get("/ip-statistics").handler(new StatisticsHandler());
         router.get("/*").handler(StaticHandler.create());
+        return router;
+    }
 
+    private void deployVerticles(Promise<Void> promise, Router router) {
         DeploymentOptions deploymentOptions = new DeploymentOptions().setConfig(config());
         List<Single<String>> verticlesToDeploy = Arrays.asList(
                 vertx.rxDeployVerticle(new IpInformationVerticle(), deploymentOptions),

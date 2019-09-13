@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 
 /**
  * Al crearse este Verticle, consultara la cotización en EUROS de todas las monedas disponibles, y las guardara en memoria.
- * Luego de pasado el tiempo {@code exchangesExpirationTime}, volver a consultar las cotizaciones.
+ * Luego de pasado el tiempo {@code exchangesExpirationTime}, volver a consultar las cotizaciones (en el siguiente request de cotizaciones).
  *
  * En caso de que la consulta de las cotizaciones falle, se reintentara en no menos de lo indicado en {@code apiRetryDelay},
  * para de esta forma, no desgastar los usos limitados del API.
@@ -90,13 +90,21 @@ public class CurrencyVerticle extends AbstractVerticle {
         }
     }
 
+    /**
+     * Retorna la cotizacion en dolares, de la moneda {@code currencyCode}
+     * Para calcular esta cotizacion, se usa la cotizacion en euros de ambas monedas.
+     * Si el API no tiene disponible la cotizacion en euros de {@code currencyCode}, se retorna 0
+     *
+     * @param currencyCode La moneda
+     * @return Cotizacion en dolares
+     */
     private double getConvertion(String currencyCode) {
         if (euroExchanges.containsKey(currencyCode)) {
             Double euroConvertion = euroExchanges.getDouble(currencyCode);
             Double dollarConvertion = euroExchanges.getDouble(dollarCode);
             return 1d / (euroConvertion / dollarConvertion);
         } else {
-            return 0d;  // Convertion not available
+            return 0d;
         }
     }
 
@@ -119,7 +127,7 @@ public class CurrencyVerticle extends AbstractVerticle {
         logger.info("Getting exchanges");
         return webClient.get(apiUri)
                 .addQueryParam("access_key", apiKey)
-                .addQueryParam("base", euroCode)        // Only available base is EURO
+                .addQueryParam("base", euroCode)
                 .rxSend()
                 .map(HttpResponse::bodyAsJsonObject);
     }

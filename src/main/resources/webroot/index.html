@@ -17,14 +17,14 @@
                 <div class="form-group">
                     <label for="ip" class="col-sm-3 control-label">Ip Address</label>
                     <div class="col-sm-6">
-                        <input type="text" id="ip" class="form-control" ng-model="ip.value" pattern="^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$"/>
+                        <input type="text" id="ip" class="form-control" ng-model="ip.value" pattern="{{ipPattern}}"/>
                     </div>
                     <div class="col-sm-3"></div>
                 </div>
 
                 <div class="col-sm-3"></div>
-                <input type="submit" ng-click="send()" value="{{buttonLabel}}" class="btn btn-primary btn-submit" />
-                <span>{{error}}</span>
+                <input type="submit" ng-click="send()" value="{{buttonLabel}}" class="btn btn-primary btn-submit col-sm-2" />
+                <span class="col-sm-4 send-error">{{error}}</span>
             </form>
             <div class="col-sm-6 ip-data" ng-if="ip.data">
                 <div>

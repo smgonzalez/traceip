@@ -16,10 +16,9 @@ import java.util.Map;
 
 /**
  * Verticle encargado de consultar la información general de un pais
- * Mantiene una cache en memoria, con la información ya consultada, para retornarla mas rapida.
+ * Mantiene una cache en memoria, con la información ya consultada, para retornarla mas rapido posteriormente.
  * Como en Vert.x, un verticle siempre corre en el mismo thread, no es necesario tener consideraciones sobre
  * la concurrencia.
- *
  */
 public class CountryInfoVerticle extends AbstractVerticle {
 
@@ -48,6 +47,12 @@ public class CountryInfoVerticle extends AbstractVerticle {
         promise.complete();
     }
 
+    /**
+     * Responde el mensaje {@code message}, con la información de la pais indicado.
+     * Si el pais está chacheado, la retorna directamente.
+     * Si el pais no esta chacheado, se envia una consulta asincronica via REST, y la misma se cacheara posteriormente
+     * @param message El mensaje con el código del pais
+     */
     private void countryInfoHandler(Message<String> message) {
         String countryCode = message.body();
 
@@ -65,6 +70,12 @@ public class CountryInfoVerticle extends AbstractVerticle {
         }
     }
 
+    /**
+     * Cachea la información del pais, y responde el mensaje con la misma.
+     *
+     * @param countryInfo Objeto con la información que será cacheada
+     * @param message Mensaje a responder
+     */
     private void cacheAndReply(CountryInfo countryInfo, Message<String> message) {
         String isoCode = countryInfo.getIsoCode();
         JsonObject countryInfoJson = new JsonObject(Json.encode(countryInfo));

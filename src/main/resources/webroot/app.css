@@ -14,3 +14,7 @@ h1 {
 .ip-data-title {
     font-size: 20px;
 }
+
+.send-error {
+    color: red;
+}
